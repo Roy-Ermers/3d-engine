@@ -1,8 +1,8 @@
 var canvas;
 var ctx;
-var cubes = [new Cube(-.25,0,0,.5,.5,.5),new Cube(.25,0,0,.5,.5,.5),new Cube(-.25,.5,0,.5,.5,.5),new Cube(.25,.5,0,.5,.5,.5),
+var cubes = [new Cube(-.25,0,0,.5,.5,.5)]/*,new Cube(.25,0,0,.5,.5,.5),new Cube(-.25,.5,0,.5,.5,.5),new Cube(.25,.5,0,.5,.5,.5),
     new Cube(-.25,0,-.5,.5,.5,.5),new Cube(.25,0,-.5,.5,.5,.5),new Cube(-.25,.5,-.5,.5,.5,.5),new Cube(.25,.5,-.5,.5,.5,.5)
-];
+]*/;
 var MousePosition;
 var currentZoom = 3;
 var zoom =  3;
@@ -16,14 +16,10 @@ function Onload() {
     canvas.addEventListener("mouseup", function() {
         MousePosition = undefined;
     });
-    cubes[0].color = Color.Random();
-    cubes[1].color = Color.Random();
-    cubes[2].color = Color.Random();
-    cubes[3].color = Color.Random();
-    cubes[4].color = Color.Random();
-    cubes[5].color = Color.Random();
-    cubes[6].color = Color.Random();
-    cubes[7].color = Color.Random();
+    cubes[0].color = Color.Red;
+    // cubes[1].color = Color.Blue;
+    // cubes[2].color = Color.Green;
+    
     canvas.addEventListener("mousemove", MouseMove);
     canvas.onmousewheel = function(evt) { ZoomView(evt); };
     ctx = canvas.getContext("2d");
@@ -53,6 +49,7 @@ function Resize() {
 function Redraw(framerate) {
     currentZoom = lerp(currentZoom,zoom,0.1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    cubes = cubes.sort(function(a,b) { return Vector3.distance(Vector3.zero,new Vector3(a.x,a.y,a.z))-Vector3.distance(Vector3.zero,new Vector3(b.x,b.y,b.z))});
     for(var c = 0; c < cubes.length; c++) {
         var t = new Array();
         var cube = cubes[c];
@@ -66,9 +63,20 @@ function Redraw(framerate) {
             //add this vertice to the drawingqueue
             t.push(p);
         }
+        var avg_z = new Array();
+        
+                   for( var i = 0; i < cube.faces.length; i++ ) {
+                       var f = cube.faces[i];
+                       avg_z[i] = {"index":i, "z":(t[f[0]].z + t[f[1]].z + t[f[2]].z + t[f[3]].z) / 4.0};
+                   }
+        
+                   avg_z.sort(function(a,b) {
+                       return b.z - a.z;
+                   });
         //go trough each face in the cube
+        var color = cube.color;
         for (var i = 0; i < cube.faces.length; i++) {
-            var f = cube.faces[i];
+            var f = cube.faces[avg_z[i].index];
             ctx.beginPath();
             ctx.strokeStyle = cube.color.toString();
 
@@ -78,6 +86,10 @@ function Redraw(framerate) {
             ctx.lineTo(t[f[3]].x, t[f[3]].y);
             ctx.closePath();
             ctx.stroke();
+            ctx.closePath();
+            color = color.darken(.9);
+            ctx.fillStyle = color.toString();
+            ctx.fill();
         }
     }
     requestAnimationFrame(Redraw);

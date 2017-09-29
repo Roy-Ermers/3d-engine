@@ -33,6 +33,9 @@ function Color(r, g, b) {
     this.toString = function() {
         return "rgb(" + r + "," + g + "," + b + ")";
     }
+    this.darken = function(Percent) {
+        return new Color(r * Percent,g * Percent,b * Percent);
+    };
 }
 Color.Red = new Color(255, 0, 0);
 Color.Green = new Color(0, 255, 0);
@@ -83,4 +86,8 @@ function Vector3(x, y, z = 0) {
         y = this.y * factor + viewHeight / 2
         return new Vector3(x, y, this.z)
     }
+}
+Vector3.zero = new Vector3(0,0,0);
+Vector3.distance = function(vec1,vec2) {
+    return Math.sqrt(Math.pow(vec2.x - vec1.x,2)+Math.pow(vec2.y - vec1.y,2)+Math.pow(vec2.z - vec1.z,2));
 }
