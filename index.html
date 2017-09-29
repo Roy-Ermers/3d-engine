@@ -13,12 +13,12 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: rgb(30, 30, 30);
         }
-        
+
         * {
             margin: 0;
             outline: none;
         }
-        
+
         html,
         body,
         canvas {
@@ -26,7 +26,7 @@
             overflow: hidden;
             z-index: -100;
         }
-        
+
         h1 {
             position: fixed;
             top: 0;
@@ -37,7 +37,7 @@
             color: white;
             box-shadow: 0px 10px 45px -19px rgba(0, 0, 0, 1);
         }
-        
+
         #settings {
             display: inline-block;
             background-color: rgb(0, 122, 204);
@@ -52,10 +52,11 @@
             box-shadow: 0px 10px 45px 5px rgba(0, 0, 0, 0.75);
             transition: .5s;
         }
-        
+
         #settings.running {
             background-color: rgb(104, 33, 122);
         }
+
         div>p {
             display: inline-block;
             color: lightgray;
@@ -65,11 +66,11 @@
             font-size: 12px;
             font-style: italic;
         }
-        
+
          ::selection {
             background-color: transparent;
         }
-        
+
         a {
             color: lightskyblue;
             text-decoration: none;
@@ -78,11 +79,11 @@
 </head>
 
 <body onload="Onload()">
-    <h1>3D cube
+    <h1>HTML Canvas 3D-engine
     </h1>
     <canvas> </canvas>
     <div id="settings">
-      <p>Made By Roy Ermers <a href="https://github.com/Roy-Ermers">(github)</a></p>
+        <p>Made By Roy Ermers <a href="https://github.com/Roy-Ermers">(github)</a></p>
     </div>
 </body>
 

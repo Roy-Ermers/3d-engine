@@ -1,9 +1,10 @@
-function Cube(x, y, z, w,h,d) {
+"use strict";
+function Cube(x, y, z, w, h, d) {
     this.x = x;
     this.y = y;
     this.z = z;
-    var size = new Vector3(w,h,d);
-    this.rotation = new Vector3(0,0,0);
+    var size = new Vector3(w, h, d);
+    this.rotation = new Vector3(0, 0, 0);
     this.vertices = [
         new Vector3(-size.x / 2 + x, size.y / 2 + y, -size.z / 2 + z),
         new Vector3(size.x / 2 + x, size.y / 2 + y, -size.z / 2 + z),
@@ -30,11 +31,11 @@ function Color(r, g, b) {
     this.r = r;
     this.g = g;
     this.b = b;
-    this.toString = function() {
+    this.toString = function () {
         return "rgb(" + r + "," + g + "," + b + ")";
     }
-    this.darken = function(Percent) {
-        return new Color(r * Percent,g * Percent,b * Percent);
+    this.shade = function (factor) {
+        return new Color(Math.floor(this.r * (1 - factor)), Math.floor(this.g * (1 - factor)), Math.floor(this.b * (1 - factor)));
     };
 }
 Color.Red = new Color(255, 0, 0);
@@ -42,14 +43,14 @@ Color.Green = new Color(0, 255, 0);
 Color.Blue = new Color(0, 0, 255);
 Color.Black = new Color(0, 0, 0);
 Color.White = new Color(255, 255, 255);
-Color.Random = function() {
-    return new Color(Math.floor(Math.random()*255),Math.floor(Math.random()*255),Math.floor(Math.random()*255));
+Color.Random = function () {
+    return new Color(Math.floor(Math.random() * 255), Math.floor(Math.random() * 255), Math.floor(Math.random() * 255));
 }
 function Vector3(x, y, z = 0) {
     this.x = x;
     this.y = y;
     this.z = z;
-    this.rotateX = function(angle) {
+    this.rotateX = function (angle) {
         var rad, cosa, sina, y, z
         rad = angle * Math.PI / 180
         cosa = Math.cos(rad)
@@ -59,7 +60,7 @@ function Vector3(x, y, z = 0) {
         return new Vector3(this.x, y, z)
     }
 
-    this.rotateY = function(angle) {
+    this.rotateY = function (angle) {
         var rad, cosa, sina, x, z
         rad = angle * Math.PI / 180
         cosa = Math.cos(rad)
@@ -69,7 +70,7 @@ function Vector3(x, y, z = 0) {
         return new Vector3(x, this.y, z)
     }
 
-    this.rotateZ = function(angle) {
+    this.rotateZ = function (angle) {
         var rad, cosa, sina, x, y
         rad = angle * Math.PI / 180
         cosa = Math.cos(rad)
@@ -79,7 +80,7 @@ function Vector3(x, y, z = 0) {
         return new Vector3(x, y, this.z)
     }
 
-    this.project = function(viewWidth, viewHeight, fov, viewDistance) {
+    this.project = function (viewWidth, viewHeight, fov, viewDistance) {
         var factor, x, y
         factor = fov / (viewDistance + this.z)
         x = this.x * factor + viewWidth / 2
@@ -87,7 +88,16 @@ function Vector3(x, y, z = 0) {
         return new Vector3(x, y, this.z)
     }
 }
-Vector3.zero = new Vector3(0,0,0);
-Vector3.distance = function(vec1,vec2) {
-    return Math.sqrt(Math.pow(vec2.x - vec1.x,2)+Math.pow(vec2.y - vec1.y,2)+Math.pow(vec2.z - vec1.z,2));
+Vector3.zero = new Vector3(0, 0, 0);
+Vector3.distance = function (vec1, vec2) {
+    return Math.sqrt(Math.pow(vec2.x - vec1.x, 2) + Math.pow(vec2.y - vec1.y, 2) + Math.pow(vec2.z - vec1.z, 2));
+}
+
+Math.clamp = function (value, min, max) {
+    return Math.max(Math.min(value, max), min);
+}
+function Camera(position, rotation, fov) {
+    this.position = position;
+    this.rotation = rotation;
+    this.fov = fov;
 }
