@@ -37,6 +37,9 @@ function Color(r, g, b) {
     this.shade = function (factor) {
         return new Color(Math.floor(this.r * (1 - factor)), Math.floor(this.g * (1 - factor)), Math.floor(this.b * (1 - factor)));
     };
+    this.invert = function() {
+        return new Color(255-this.r,255-this.g,255-this.b);
+    }
 }
 Color.Red = new Color(255, 0, 0);
 Color.Green = new Color(0, 255, 0);
@@ -95,9 +98,4 @@ Vector3.distance = function (vec1, vec2) {
 
 Math.clamp = function (value, min, max) {
     return Math.max(Math.min(value, max), min);
-}
-function Camera(position, rotation, fov) {
-    this.position = position;
-    this.rotation = rotation;
-    this.fov = fov;
 }

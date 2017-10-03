@@ -6,6 +6,9 @@ var MousePosition;
 var currentZoom = 3;
 var zoom = 3;
 var Rotation = new Vector3(0, 0, 0);
+var Debug = {
+    DrawOrder: false
+}
 function ZoomView(evt) {
     zoom = Math.max(2, zoom + evt.deltaY * 0.01);
 }
@@ -15,14 +18,13 @@ function Onload() {
     canvas.addEventListener("mouseup", function () {
         MousePosition = undefined;
     });
-    cubes.push(new Cube(0, 0, 0, 1, 1, 1));
-    // for (var x = -5; x < 5; x++) {
-    //     for (var z = -5; z < 5; z++) {
-    //         cubes.push(new Cube(x, 2 - x * .5 * (z * .5), z, 1, 1, 1));
-    //         cubes[cubes.length - 1].color = new Color(Math.sin(x / 10) * 255, Math.sin(x / 10 * z / 10) * 255, Math.sin(z / 10) * 255);
-    //     }
-    // }
-
+    for (var x = -5; x < 5; x++) {
+        for (var z = -5; z < 5; z++) {
+            cubes.push(new Cube(x, 2 + Math.sin(x * z), z, 1, 1, 1));
+            cubes[cubes.length - 1].color = new Color(128 + Math.sin(x / 10) * 128, 128 + Math.sin(x / 10 * z / 10) * 128, 128 + Math.sin(z / 10) * 128);
+        }
+    }
+    document.addEventListener("keydown", KeyDown);
     canvas.addEventListener("mousemove", MouseMove);
     canvas.onmousewheel = function (evt) { ZoomView(evt); };
     ctx = canvas.getContext("2d");
@@ -38,46 +40,56 @@ function OnMouseDown(event) {
     if (MousePosition != undefined) return;
     MousePosition = { x: event.clientX, y: event.clientY };
 }
-
+function KeyDown(event) {
+    if (event.code == "ArrowUp") {
+        Rotation.x++;
+    }
+    if (event.code == "ArrowDown") {
+        Rotation.x--;
+    }
+    if (event.code == "ArrowLeft") {
+        Rotation.y--;
+    }
+    if (event.code == "ArrowRight") {
+        Rotation.y++;
+    }
+    if (event.code == "z") {
+        Rotation.z++;
+    }
+    if (event.code == "x") {
+        Rotation.z--;
+    }
+}
 function MouseMove(event) {
     if (MousePosition == undefined) return;
     Rotation.y = lerp(Rotation.y, (MousePosition.x - event.clientX) * 0.25, 0.2);
     Rotation.x = lerp(Rotation.x, (MousePosition.y - event.clientY) * -0.25, 0.2);
 }
-
 function Resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 function CameraPosition() {
-    var x = currentZoom * Math.sin(Rotation.x);
-    var y = currentZoom * Math.sin(Rotation.y);
-    var z = currentZoom * Math.sin(Rotation.z);
-    return new Vector3(x, y, z);
+    return new Vector3(currentZoom,0,0).rotateX(Rotation.x).rotateY(-Rotation.y+90).rotateZ(Rotation.z);
 }
 var t;
 function Redraw(framerate) {
     currentZoom = lerp(currentZoom, zoom, 0.1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    cubes = cubes.sort(function (a, b) { return Vector3.distance(CameraPosition(), new Vector3(b.x, b.y, b.z)) - Vector3.distance(CameraPosition(), new Vector3(a.x, a.y, a.z)) });
-    for (var c = 0; c < cubes.length; c++) {
+    var color = Color.White;
+    var drawOrder = cubes.sort(function (a, b) { return Vector3.distance(new Vector3(b.x, b.y, b.z), CameraPosition()) - Vector3.distance(CameraPosition(), new Vector3(a.x, a.y, a.z)) });
+    for (var c = 0; c < drawOrder.length; c++) {
         t = new Array();
-        var cube = cubes[c];
-        ctx.strokeStyle = cube.color.toString();
+        var cube = drawOrder[c];
         for (var i = 0; i < cube.vertices.length; i++) {
             //get current vertice
             var v = cube.vertices[i];
             //apply rotation
-            var r = v.rotateX(Rotation.x + cube.rotation.x).rotateY(Rotation.y + cube.rotation.y);
+            var r = v.rotateX(Rotation.x + cube.rotation.x).rotateY(Rotation.y + cube.rotation.y).rotateZ(Rotation.z + cube.rotation.z);
             //apply 3d transformations
             var p = r.project(canvas.width, canvas.height, 500, currentZoom);
             //add this vertice to the drawingqueue
-            if (p.x >= 0 && p.y >= 0 && p.x <= canvas.width && p.y <= canvas.height)
-                t.push(p);
-            else {
-                t.splice(t.length - i, t.length);
-                continue;
-            }
+            t.push(p);
         }
         //get the avg Z position
         var avg_z = new Array();
@@ -94,9 +106,14 @@ function Redraw(framerate) {
         for (var i = 0; i < cube.faces.length; i++) {
             var f = cube.faces[avg_z[i].index];
             ctx.beginPath();
-            ctx.strokeStyle = Color.White;
-            ctx.fillStyle = cube.color.shade(0.05 * avg_z[i].index).toString();
-
+            if (Debug.DrawOrder) {
+                ctx.strokeStyle = color.shade(0.01 * c).invert().toString();
+                ctx.fillStyle = color.shade(0.01 * c).toString();
+            }
+            else {
+                ctx.fillStyle = cube.color.shade(0.05 * i).toString();
+                ctx.strokeStyle = cube.color.invert();
+            }
             ctx.moveTo(t[f[0]].x, t[f[0]].y);
             ctx.lineTo(t[f[1]].x, t[f[1]].y);
             ctx.lineTo(t[f[2]].x, t[f[2]].y);
