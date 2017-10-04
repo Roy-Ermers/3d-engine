@@ -1,4 +1,4 @@
-# 3d-cube
-This webpage is a rotating wirecube for anyone who thinks this is useful for something.
+# 3d-engine
+This is my best shot for a 3d engine on a html canvas
 
 [working site](https://roy-ermers.github.io/3d-engine/)
