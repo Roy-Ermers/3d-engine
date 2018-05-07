@@ -1,11 +1,11 @@
 "use strict";
 var canvas;
 var ctx;
-var cubes = [];
 var MousePosition;
+var cubes = [];
+var camera = new Camera(0, 0, 10, 70);
 var currentZoom = 3;
 var zoom = 3;
-var Rotation = new Vector3(0, 0, 0);
 var Debug = {
     DrawOrder: false
 }
@@ -29,12 +29,13 @@ function Onload() {
             for (var z = -2; z <= 2; z++) {
                 if (Math.abs(x) == 2 || Math.abs(y) == 2 || Math.abs(z) == 2) {
                     cubes.push(new Cube(x, y, z, 1, 1, 1));
-                    cubes[cubes.length - 1].rotation = new Vector3(x * 90, 0, 0);
                     cubes[cubes.length - 1].color = Color.Random;
                 }
             }
         }
     }
+    cubes.push(new Cube(0, 0, 0, .5, .5, 1));
+    cubes[cubes.length - 1].color = Color.Red;
     document.addEventListener("keydown", KeyDown);
     canvas.addEventListener("mousemove", MouseMove);
     canvas.onmousewheel = function (evt) {
@@ -61,29 +62,29 @@ function OnMouseDown(event) {
 
 function KeyDown(event) {
     if (event.code == "ArrowUp") {
-        Rotation.x++;
+        camera.rotation.x++;
     }
     if (event.code == "ArrowDown") {
-        Rotation.x--;
+        camera.rotation.x--;
     }
     if (event.code == "ArrowLeft") {
-        Rotation.y--;
+        camera.rotation.y--;
     }
     if (event.code == "ArrowRight") {
-        Rotation.y++;
+        camera.rotation.y++;
     }
-    if (event.code == "z") {
-        Rotation.z++;
+    if (event.code == "KeyZ") {
+        camera.rotation.z++;
     }
-    if (event.code == "x") {
-        Rotation.z--;
+    if (event.code == "KeyX") {
+        camera.rotation.z--;
     }
 }
 
 function MouseMove(event) {
     if (MousePosition == undefined) return;
-    Rotation.y = lerp(Rotation.y, (MousePosition.x - event.clientX) * 0.25, 0.2);
-    Rotation.x = lerp(Rotation.x, (MousePosition.y - event.clientY) * -0.25, 0.2);
+    camera.rotation.y = lerp(camera.rotation.y, (MousePosition.x - event.clientX) * 0.25, 0.2);
+    camera.rotation.x = lerp(camera.rotation.x, (MousePosition.y - event.clientY) * -0.25, 0.2);
 }
 
 function Resize() {
@@ -91,65 +92,67 @@ function Resize() {
     canvas.height = window.innerHeight;
 }
 
-function CameraPosition() {
-    return new Vector3(currentZoom, 0, 0).rotateX(Rotation.x).rotateY(-Rotation.y + 90).rotateZ(Rotation.x);
-}
-var t;
+var VertexQueue;
 
 function Redraw(framerate) {
+    document.getElementById("info").innerText = "CAMPOS:" + camera.position.toString() + " CAMROT:" + camera.rotation.toString();
+
     currentZoom = lerp(currentZoom, zoom, 0.1);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    var color = Color.White;
+    cubes[cubes.length - 1].x = camera.position.x;
+    cubes[cubes.length - 1].y = camera.position.y;
+    cubes[cubes.length - 1].z = camera.position.z;
+    cubes[cubes.length - 1].color = new Color(framerate % 255, 0, 0);
+    var color = Color.Black;
     var drawOrder = cubes.sort(function (a, b) {
-        return Vector3.distance(new Vector3(b.x, b.y, b.z), CameraPosition()) - Vector3.distance(new Vector3(a.x, a.y, a.z), CameraPosition())
+        return Vector3.distance(new Vector3(b.x, b.y, b.z), camera.position) - Vector3.distance(new Vector3(a.x, a.y, a.z), camera.position);
     });
-    for (var c = 0; c < drawOrder.length; c++) {
-        t = [];
-        var cube = drawOrder[c];
-        for (var i = 0; i < cube.vertices.length; i++) {
+    for (let CubeIndex = 0; CubeIndex < drawOrder.length; CubeIndex++) {
+        VertexQueue = [];
+        let cube = drawOrder[CubeIndex];
+        for (let i = 0; i < cube.vertices.length; i++) {
             //get current vertice
-            var v = cube.vertices[i];
+            let vertex = cube.vertices[i];
             //apply rotation
-            var r = v.rotateX(Rotation.x + cube.rotation.x).rotateY(Rotation.y + cube.rotation.y).rotateZ(Rotation.z + cube.rotation.z);
+            let VertexRotation = vertex.rotateX(camera.rotation.x + cube.rotation.x).rotateY(camera.rotation.y + cube.rotation.y).rotateZ(camera.rotation.z + cube.rotation.z);
             //apply 3d transformations
-            var p = r.project(canvas.width, canvas.height, 700, currentZoom);
+            var Projection = VertexRotation.project(canvas.width, canvas.height, Camera.FieldOfView * 10, 100);
             //add this vertice to the drawingqueue
-            t.push(p);
+            VertexQueue.push(Projection);
         }
         //get the avg Z position
-        var avg_z = [];
+        var AvgZ = [];
 
-        for (var i = 0; i < cube.faces.length; i++) {
-            var f = cube.faces[i];
-            avg_z[i] = {
+        for (let i = 0; i < cube.faces.length; i++) {
+            var faces = cube.faces[i];
+            AvgZ[i] = {
                 "index": i,
-                "z": (t[f[0]].z + t[f[1]].z + t[f[2]].z + t[f[3]].z) / 4.0
+                "z": (VertexQueue[faces[0]].z + VertexQueue[faces[1]].z + VertexQueue[faces[2]].z + VertexQueue[faces[3]].z) / 4.0
             };
         }
         //And sort them on their Z value
-        avg_z.sort(function (a, b) {
+        AvgZ.sort(function (a, b) {
             return b.z - a.z;
         });
         //go trough each face in the cube
         for (var i = 0; i < cube.faces.length; i++) {
-            var f = cube.faces[avg_z[i].index];
+            var faces = cube.faces[AvgZ[i].index];
             ctx.beginPath();
             if (Debug.DrawOrder) {
-                ctx.strokeStyle = color.shade(0.01 * c).invert().toString();
-                ctx.fillStyle = color.shade(0.01 * c).toString();
+                ctx.strokeStyle = color.shade(0.01 * CubeIndex).invert().toString();
+                ctx.fillStyle = color.shade(0.01 * CubeIndex).toString();
             } else {
                 ctx.fillStyle = cube.color.shade(0.05 * i).toString();
                 ctx.strokeStyle = cube.color.invert();
             }
-            ctx.moveTo(t[f[0]].x, t[f[0]].y);
-            ctx.lineTo(t[f[1]].x, t[f[1]].y);
-            ctx.lineTo(t[f[2]].x, t[f[2]].y);
-            ctx.lineTo(t[f[3]].x, t[f[3]].y);
+            ctx.moveTo(VertexQueue[faces[0]].x, VertexQueue[faces[0]].y);
+            ctx.lineTo(VertexQueue[faces[1]].x, VertexQueue[faces[1]].y);
+            ctx.lineTo(VertexQueue[faces[2]].x, VertexQueue[faces[2]].y);
+            ctx.lineTo(VertexQueue[faces[3]].x, VertexQueue[faces[3]].y);
             ctx.closePath();
-            // ctx.stroke();
+            ctx.stroke();
             ctx.fill();
         }
     }
-    document.getElementById("info").innerText = "CAMPOS:" + CameraPosition().toString() + " CAMROT:" + Rotation.toString();
     requestAnimationFrame(Redraw);
 }

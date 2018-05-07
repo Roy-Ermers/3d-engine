@@ -1,3 +1,17 @@
+class Camera {
+    set rotation(val) {
+        this.Rotation = val;
+        this.position = this.position.rotateX(val.x).rotateY(val.y).rotateZ(val.z);
+    }
+    get rotation() {
+        return this.Rotation;
+    }
+    constructor(x, y, z, fov) {
+        this.position = new Vector3(x, y, z);
+        this.FieldOfView = fov;
+        this.Rotation = new Quaternion(0, 0, 0, 0);
+    }
+}
 class Cube {
     constructor(x, y, z, w, h, d) {
         this.x = x;
@@ -149,7 +163,7 @@ class Vector3 {
 
 class Quaternion {
     constructor(x, y, z, w) {
-        this.w = w;
+        this.w = w ? w : 0;
         this.x = x;
         this.y = y;
         this.z = z;
@@ -160,18 +174,20 @@ class Quaternion {
         let cosr = 1 - 2 * (this.x * this.x + this.y * this.y);
         roll = Math.atan2(sinr, cosr);
 
-        // pitch (y-axis rotation)
         let sinp = 2 * (this.w * this.y - this.z * this.x);
         if (Math.abs(sinp) >= 1)
-            pitch = Math.copysign(M_PI / 2, sinp);
+            pitch = Math.copysign(Math.PI / 2, sinp);
         else
             pitch = Math.asin(sinp);
 
-        // yaw (z-axis rotation)
         let siny = 2 * (this.w * this.z + this.x * this.y);
         let cosy = 1 - 2 * (this.y * this.y + this.z * this.z);
         yaw = Math.atan2(siny, cosy);
     }
+    toString() {
+        return "(" + this.x.toFixed(2) + ", " + this.y.toFixed(2) + ", " + this.z.toFixed(2) + ", " + this.w.toFixed(2) + ")";
+    }
+
 }
 //  #endregion
 Math.clamp = function (value, min, max) {
