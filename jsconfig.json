@@ -1,0 +1,9 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"alwaysStrict": true,
+		"checkJs": true,
+		"target": "es2020"
+	}
+
+}
